@@ -720,7 +720,9 @@ Deluge.details.OptionsTab = Ext.extend(Ext.form.FormPanel, {
 				'auto_managed': false,
 				'stop_at_ratio': false,
 				'stop_ratio': 2.0,
-				'remove_at_ratio': false,
+			        'stop_at_seedtime': false,
+			        'stop_seedtime': 49.0,
+			        'remove_at_ratio': false,
 				'move_completed': false,
                 'move_completed_path': '',
 				'private': false,
@@ -878,7 +880,7 @@ Deluge.details.OptionsTab = Ext.extend(Ext.form.FormPanel, {
 			labelSeparator: '',
 			id: 'stop_at_ratio',
 			width: 120,
-			boxLabel: _('Stop seed at ratio'),
+			boxLabel: _('Stop at ratio'),
 			handler: this.onStopRatioChecked,
 			scope: this
 		});
@@ -911,7 +913,34 @@ Deluge.details.OptionsTab = Ext.extend(Ext.form.FormPanel, {
 			colspan: 2
 		});
 
-		this.fields.move_completed = this.fieldsets.queue.add({
+	    this.fields.stop_at_seedtime = this.fieldsets.queue.add({
+		fieldLabel: '',
+		labelSeparator: '',
+		id: 'stop_at_seedtime',
+		width: 120,
+		boxLabel: _('Stop at seedtime'),
+		handler: this.onStopSeedTimeChecked,
+		scope: this
+		});
+	    
+	    this.fields.stop_seedtime = this.fieldsets.queue.add({
+		xtype: 'spinnerfield',
+		id: 'stop_seedtime',
+		name: 'stop_seedtime',
+		disabled: true,
+		width: 50,
+		value: 49.0,
+		strategy: {
+		    xtype: 'number',
+		    minValue: 0,
+		    maxValue: 99999,
+		    incrementValue: 1,
+		    alternateIncrementValue: 1,
+		    decimalPrecision: 1
+		    }
+		});
+
+        this.fields.move_completed = this.fieldsets.queue.add({
 			fieldLabel: '',
 			labelSeparator: '',
 			id: 'move_completed',
@@ -1074,20 +1103,28 @@ Deluge.details.OptionsTab = Ext.extend(Ext.form.FormPanel, {
     },
 
 	onStopRatioChecked: function(checkbox, checked) {
-		this.fields.remove_at_ratio.setDisabled(!checked);
+                var stop_at_seedtime = this.optionsManager.get('stop_at_seedtime');
+                this.fields.remove_at_ratio.setDisabled(!checked && !stop_at_seedtime);
 		this.fields.stop_ratio.setDisabled(!checked);
 	},
 
-	onRequestComplete: function(torrent, options) {
+        onStopSeedTimeChecked: function(checkbox, checked) {
+	        var stop_at_ratio = this.optionsManager.get('stop_at_ratio');
+	        this.fields.remove_at_ratio.setDisabled(!stop_at_ratio && !checked);
+	        this.fields.stop_seedtime.setDisabled(!checked);
+	},
+
+        onRequestComplete: function(torrent, options) {
 		this.fields['private'].setValue(torrent['private']);
 		this.fields['private'].setDisabled(true);
 		delete torrent['private'];
 		torrent['auto_managed'] = torrent['is_auto_managed'];
 		this.optionsManager.setDefault(torrent);
 		var stop_at_ratio = this.optionsManager.get('stop_at_ratio');
-		this.fields.remove_at_ratio.setDisabled(!stop_at_ratio);
+                var stop_at_seedtime = this.optionsManager.get('stop_at_seedtime');
+                this.fields.remove_at_ratio.setDisabled(!stop_at_ratio && !stop_at_seedtime);
 		this.fields.stop_ratio.setDisabled(!stop_at_ratio);
-        this.fields.move_completed_path.setDisabled(!this.optionsManager.get('move_completed'));
+                this.fields.move_completed_path.setDisabled(!this.optionsManager.get('move_completed'));
 	}
 });
 /*!
@@ -7020,7 +7057,7 @@ Deluge.Keys = {
 	 */
     Options: [
         'max_download_speed', 'max_upload_speed', 'max_connections',
-        'max_upload_slots','is_auto_managed', 'stop_at_ratio', 'stop_ratio',
+        'max_upload_slots','is_auto_managed', 'stop_at_ratio', 'stop_ratio', 'stop_at_seedtime', 'stop_seedtime',
         'remove_at_ratio', 'private', 'prioritize_first_last',
         'move_completed', 'move_completed_path'
     ]

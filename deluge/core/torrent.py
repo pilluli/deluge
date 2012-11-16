@@ -88,6 +88,8 @@ class TorrentOptions(dict):
                             "auto_managed": "auto_managed",
                             "stop_at_ratio": "stop_seed_at_ratio",
                             "stop_ratio": "stop_seed_ratio",
+                            "stop_at_seedtime": "stop_seed_at_seedtime",
+                            "stop_seedtime": "stop_seed_seedtime",
                             "remove_at_ratio": "remove_seed_at_ratio",
                             "move_completed": "move_completed",
                             "move_completed_path": "move_completed_path",
@@ -282,6 +284,12 @@ class Torrent(object):
     def set_stop_at_ratio(self, stop_at_ratio):
         self.options["stop_at_ratio"] = stop_at_ratio
 
+    def set_stop_seedtime(self, stop_seedtime):
+        self.options["stop_seedtime"] = stop_seedtime
+
+    def set_stop_at_seedtime(self, stop_at_seedtime):
+        self.options["stop_at_seedtime"] = stop_at_seedtime
+
     def set_remove_at_ratio(self, remove_at_ratio):
         self.options["remove_at_ratio"] = remove_at_ratio
 
@@ -428,6 +436,8 @@ class Torrent(object):
         else:
             status = self.status
 
+        # todo: modify eta if stop_at_seedtime is set
+
         if self.is_finished and self.options["stop_at_ratio"]:
             # We're a seed, so calculate the time to the 'stop_share_ratio'
             if not status.upload_payload_rate:
@@ -446,6 +456,15 @@ class Torrent(object):
             eta = 0
 
         return eta
+
+    def get_seedtime(self):
+        """Returns the seedtime for this torrent in hours"""
+        if self.status == None:
+            status = self.handle.status()
+        else:
+            status = self.status
+
+        return float(status.seeding_time) / 60.0 / 60.0
 
     def get_ratio(self):
         """Returns the ratio for this torrent"""
@@ -643,6 +662,8 @@ class Torrent(object):
             "state": self.state,
             "stop_at_ratio": self.options["stop_at_ratio"],
             "stop_ratio": self.options["stop_ratio"],
+            "stop_at_seedtime": self.options["stop_at_seedtime"],
+            "stop_seedtime": self.options["stop_seedtime"],
             "time_added": self.time_added,
             "total_done": self.status.total_done,
             "total_payload_download": self.status.total_payload_download,
@@ -809,6 +830,12 @@ class Torrent(object):
                     if self.get_ratio() >= self.options["stop_ratio"]:
                         #XXX: This should just be returned in the RPC Response, no event
                         #self.signals.emit_event("torrent_resume_at_stop_ratio")
+                        return
+                # If the torrent has already reached it's 'stop_seed_seedtime' then do not do anything
+                if self.options["stop_at_seedtime"]:
+                    if self.get_seedtime() >= self.options["stop_seedtime"]:
+                        #XXX: This should just be returned in the RPC Response, no event
+                        #self.signals.emit_event("torrent_resume_at_stop_seedtime")
                         return
 
             if self.options["auto_managed"]:

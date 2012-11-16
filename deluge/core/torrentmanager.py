@@ -79,6 +79,8 @@ class TorrentState:
             is_finished=False,
             stop_ratio=2.00,
             stop_at_ratio=False,
+            stop_seedtime=49.00,
+            stop_at_seedtime=False,
             remove_at_ratio=False,
             move_completed=False,
             move_completed_path=None,
@@ -107,6 +109,8 @@ class TorrentState:
         self.auto_managed = auto_managed
         self.stop_ratio = stop_ratio
         self.stop_at_ratio = stop_at_ratio
+        self.stop_seedtime = stop_seedtime
+        self.stop_at_seedtime = stop_at_seedtime
         self.remove_at_ratio = remove_at_ratio
         self.move_completed = move_completed
         self.move_completed_path = move_completed_path
@@ -272,6 +276,17 @@ class TorrentManager(component.Component):
                         break
                     if not torrent.handle.is_paused():
                         torrent.pause()
+            if torrent.options["stop_at_seedtime"] and torrent.state not in ("Checking", "Allocating", "Paused", "Queued"):
+                # If the global setting is set, but the per-torrent isn't.. Just skip to the next torrent
+                # This is so that a user can turn-off the stop at ratio option on a per-torrent basis
+                if not torrent.options["stop_at_seedtime"]:
+                    continue
+                if torrent.get_seedtime() >= torrent.options["stop_seedtime"] and torrent.is_finished:
+                    if torrent.options["remove_at_ratio"]:
+                        self.remove(torrent_id)
+                        break
+                    if not torrent.handle.is_paused():
+                        torrent.pause()
 
     def __getitem__(self, torrent_id):
         """Return the Torrent with torrent_id"""
@@ -354,6 +369,8 @@ class TorrentManager(component.Component):
             options["auto_managed"] = state.auto_managed
             options["stop_at_ratio"] = state.stop_at_ratio
             options["stop_ratio"] = state.stop_ratio
+            options["stop_at_seedtime"] = state.stop_at_seedtime
+            options["stop_seedtime"] = state.stop_seedtime
             options["remove_at_ratio"] = state.remove_at_ratio
             options["move_completed"] = state.move_completed
             options["move_completed_path"] = state.move_completed_path
@@ -674,6 +691,8 @@ class TorrentManager(component.Component):
                 torrent.is_finished,
                 torrent.options["stop_ratio"],
                 torrent.options["stop_at_ratio"],
+                torrent.options["stop_seedtime"],
+                torrent.options["stop_at_seedtime"],
                 torrent.options["remove_at_ratio"],
                 torrent.options["move_completed"],
                 torrent.options["move_completed_path"],

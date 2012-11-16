@@ -578,6 +578,16 @@ class Core(component.Component):
         return self.torrentmanager[torrent_id].set_stop_ratio(value)
 
     @export
+    def set_torrent_stop_at_seedtime(self, torrent_id, value):
+        """Sets the torrent to stop at 'stop_seedtime'"""
+        return self.torrentmanager[torrent_id].set_stop_at_seedtime(value)
+
+    @export
+    def set_torrent_stop_seedtime(self, torrent_id, value):
+        """Sets the seedtime when to stop a torrent if 'stop_at_seedtime' is set"""
+        return self.torrentmanager[torrent_id].set_stop_seedtime(value)
+
+    @export
     def set_torrent_remove_at_ratio(self, torrent_id, value):
         """Sets the torrent to be removed at 'stop_ratio'"""
         return self.torrentmanager[torrent_id].set_remove_at_ratio(value)

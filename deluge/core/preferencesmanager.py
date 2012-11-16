@@ -96,6 +96,8 @@ DEFAULT_PREFS = {
     "stop_seed_at_ratio": False,
     "remove_seed_at_ratio": False,
     "stop_seed_ratio": 2.00,
+    "stop_seed_at_seedtime": False,
+    "stop_seed_seedtime": 49.00,
     "share_ratio_limit": 2.00,
     "seed_time_ratio_limit": 7.00,
     "seed_time_limit": 180,
